@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import QRCode from "qrcode";
+
 import { getSessionDashboard } from "@/modules/session/dashboard.service";
 
 interface RouteContext {
@@ -16,8 +18,20 @@ export async function GET(
 
     const session = await getSessionDashboard(token);
 
-    return NextResponse.json(session);
+    const joinUrl =
+      `${req.nextUrl.origin}/join/${session.joinToken}`;
+
+    const qrDataUrl =
+      await QRCode.toDataURL(joinUrl);
+
+    return NextResponse.json({
+      ...session,
+      joinUrl,
+      qrDataUrl,
+    });
+
   } catch (error) {
+
     return NextResponse.json(
       {
         error:
@@ -25,7 +39,10 @@ export async function GET(
             ? error.message
             : "Unknown Error",
       },
-      { status: 404 }
+      {
+        status: 404,
+      }
     );
+
   }
 }

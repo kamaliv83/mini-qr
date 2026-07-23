@@ -9,66 +9,134 @@ interface JoinPageProps {
 }
 
 export default function JoinPage({ params }: JoinPageProps) {
+  const [mobile, setMobile] = useState("");
+  const [otp, setOtp] = useState("");
   const [name, setName] = useState("");
+  const [step, setStep] = useState(1);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  async function handleJoin(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-
+  async function sendOtp() {
     setError("");
-    setMessage("");
 
-    const { token } = await params;
-
-    const res = await fetch(`/api/join/${token}`, {
+    const res = await fetch("/api/auth/otp/request", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ mobile }),
     });
 
-    const data = await res.json();
-
     if (!res.ok) {
-      setError(data.error);
+      setError("Failed to send OTP");
       return;
     }
 
-    setMessage("Successfully joined the session!");
-    setName("");
+    setStep(2);
+  }
+
+  async function verifyAndJoin() {
+    setError("");
+
+    const verify = await fetch("/api/auth/otp/verify", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        mobile,
+        otp,
+      }),
+    });
+
+    const verifyData = await verify.json();
+
+    if (!verify.ok) {
+      setError(verifyData.error);
+      return;
+    }
+
+    const { token } = await params;
+
+    const join = await fetch(`/api/join/${token}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name,
+      }),
+    });
+
+    const joinData = await join.json();
+
+    if (!join.ok) {
+      setError(joinData.error);
+      return;
+    }
+
+    setMessage("Successfully Joined Session ✅");
+
+    setTimeout(() => {
+      window.location.href = "/feedback";
+    }, 1000);
   }
 
   return (
-    <main className="max-w-md mx-auto mt-10 p-6">
-      <h1 className="text-3xl font-bold mb-6">
+    <main className="max-w-md mx-auto mt-10 p-6 space-y-4">
+      <h1 className="text-3xl font-bold">
         Join Session
       </h1>
 
-      <form onSubmit={handleJoin} className="space-y-4">
-        <input
-          type="text"
-          placeholder="Enter Your Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full border rounded p-2"
-        />
+      {step === 1 && (
+        <>
+          <input
+            className="border p-2 w-full"
+            placeholder="Mobile Number"
+            value={mobile}
+            onChange={(e) => setMobile(e.target.value)}
+          />
 
-        <button
-          type="submit"
-          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-        >
-          Join Session
-        </button>
-      </form>
+          <button
+            onClick={sendOtp}
+            className="bg-blue-600 text-white px-4 py-2 rounded w-full"
+          >
+            Send OTP
+          </button>
+        </>
+      )}
+
+      {step === 2 && (
+        <>
+          <input
+            className="border p-2 w-full"
+            placeholder="OTP"
+            value={otp}
+            onChange={(e) => setOtp(e.target.value)}
+          />
+
+          <input
+            className="border p-2 w-full"
+            placeholder="Your Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+
+          <button
+            onClick={verifyAndJoin}
+            className="bg-green-600 text-white px-4 py-2 rounded w-full"
+          >
+            Verify & Join
+          </button>
+        </>
+      )}
 
       {message && (
-        <p className="text-green-600 mt-4">{message}</p>
+        <p className="text-green-600">{message}</p>
       )}
 
       {error && (
-        <p className="text-red-600 mt-4">{error}</p>
+        <p className="text-red-600">{error}</p>
       )}
     </main>
   );

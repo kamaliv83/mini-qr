@@ -20,6 +20,14 @@ export default function Home() {
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
 
+  async function logout() {
+    await fetch("/api/auth/logout", {
+      method: "POST",
+    });
+
+    window.location.href = "/login";
+  }
+
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
@@ -43,6 +51,11 @@ export default function Home() {
     }
 
     setResult(data);
+
+// Redirect to Live Dashboard
+setTimeout(() => {
+  window.location.href = `/dashboard/${data.session.joinToken}`;
+}, 1000);
   }
 
   async function copyJoinUrl() {
@@ -73,11 +86,20 @@ export default function Home() {
   return (
     <main className="max-w-md mx-auto mt-10 p-6">
 
-      <h1 className="text-3xl font-bold mb-6">
-        Create Session
-      </h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">
+          Create Session
+        </h1>
 
-      <form 
+        <button
+          onClick={logout}
+          className="bg-red-600 text-white px-4 py-2 rounded"
+        >
+          Logout
+        </button>
+      </div>
+
+      <form
         onSubmit={handleCreate}
         className="space-y-4"
       >
@@ -86,14 +108,14 @@ export default function Home() {
           className="w-full border rounded p-2"
           placeholder="Session Title"
           value={title}
-          onChange={(e)=>setTitle(e.target.value)}
+          onChange={(e) => setTitle(e.target.value)}
         />
 
         <input
           className="w-full border rounded p-2"
           placeholder="Host Name"
           value={host}
-          onChange={(e)=>setHost(e.target.value)}
+          onChange={(e) => setHost(e.target.value)}
         />
 
         <button
@@ -105,14 +127,11 @@ export default function Home() {
 
       </form>
 
-
       {error && (
         <p className="text-red-600 mt-4">
           {error}
         </p>
       )}
-
-
 
       {result && (
 
@@ -122,16 +141,13 @@ export default function Home() {
             Session Created ✅
           </h2>
 
-
           <p>
             <b>Title:</b> {result.session.title}
           </p>
 
-
           <p>
             <b>Host:</b> {result.session.host}
           </p>
-
 
           <div>
 
@@ -145,8 +161,6 @@ export default function Home() {
 
           </div>
 
-
-
           <button
             onClick={copyJoinUrl}
             className="bg-green-600 text-white px-4 py-2 rounded"
@@ -154,14 +168,11 @@ export default function Home() {
             {copied ? "Copied ✅" : "Copy URL"}
           </button>
 
-
-
           <div>
 
             <p className="font-semibold mb-2">
               QR Code:
             </p>
-
 
             <img
               src={result.qrDataUrl}
@@ -171,15 +182,12 @@ export default function Home() {
 
           </div>
 
-
-
           <button
             onClick={downloadQR}
             className="bg-purple-600 text-white px-4 py-2 rounded"
           >
             Download QR
           </button>
-
 
         </div>
 
